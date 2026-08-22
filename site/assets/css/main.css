@@ -46,7 +46,8 @@
   --space-8:  4rem;      /* 64px  */
 
   /* Misc */
-  --drawer-width:  300px;
+  --drawer-width:        300px;
+  --content-aside-width: 300px;
   --bottom-bar-h:  60px;
   --radius:        4px;
   --radius-pill:   25px;
@@ -273,6 +274,9 @@ li:last-child { margin-bottom: 0; }
 
 /* ── DRAWER (desktop only — hidden on mobile) ─────────────── */
 .drawer { display: none; }
+
+/* ── CONTENT ASIDE — encart publicitaire (desktop only) ────── */
+.content-aside { display: none; }
 
 /* ── MAIN CONTENT ─────────────────────────────────────────── */
 .main-content {
@@ -1601,6 +1605,25 @@ button.chip {
     transition:       background-color 0.25s ease, border-color 0.25s ease;
   }
 
+  /* ── Content aside — encart publicitaire, à droite du contenu ── */
+  .content-aside {
+    display:     flex;
+    flex-shrink: 0;
+    width:       var(--content-aside-width);
+    padding:     var(--space-6) var(--space-4) var(--space-2);
+    position:    sticky;
+    top:         0;
+    height:      100vh;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .content-aside:has(.content-aside__ad-slot:empty) { display: none; }
+
+  .content-aside__ad-slot {
+    max-width: 100%;
+    overflow:  hidden;
+  }
+
   /* Identity */
   .drawer__identity { display: flex; flex-direction: column; gap: var(--space-1); }
 
@@ -1719,15 +1742,6 @@ button.chip {
     flex-shrink: 0;
     opacity:     0.35;
   }
-
-  /* Encart publicitaire — vide tant qu'aucun slot n'est rendu (pas de bloc fantôme) */
-  .drawer__ad-slot {
-    align-self:  center;
-    max-width:   100%;
-    overflow:    hidden;
-    flex-shrink: 0;
-  }
-  .drawer__ad-slot:empty { display: none; }
 
   /* Footer */
   .drawer__footer {
@@ -1910,4 +1924,6 @@ button.chip {
   .drawer__name   { font-size: var(--fs-h2); }  /* 32px au lieu de 40px */
   .drawer__avatar { width: 100px; height: 100px; }
 
+  /* Pas assez de place pour drawer + contenu + encart pub */
+  .content-aside { display: none; }
 }

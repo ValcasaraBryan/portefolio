@@ -189,9 +189,6 @@ $site_name_e = $esc($site_name);
       <!-- 6. Divider -->
       <div class="drawer__divider"></div>
 
-      <!-- 6b. Encart publicitaire (rempli par ads.js, uniquement si consentement accepté) -->
-      <div class="drawer__ad-slot" id="ad-slot-sidebar"></div>
-
       <!-- 7. Footer: copyright + social links -->
       <div class="drawer__footer">
         <span class="drawer__copy">© 2026</span>
@@ -217,6 +214,11 @@ $site_name_e = $esc($site_name);
         </div>
       </section>
     </main>
+
+    <!-- Desktop: encart publicitaire à droite du contenu (rempli par ads.js, uniquement si consentement accepté) -->
+    <aside class="content-aside">
+      <div class="content-aside__ad-slot" id="ad-slot-sidebar"></div>
+    </aside>
 
     <!-- Mobile: bottom tab bar -->
     <nav class="bottom-tab-bar">
@@ -279,6 +281,6 @@ $site_name_e = $esc($site_name);
   </div>
 
   <script async defer type="module" src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js"></script>
-  <script src="./assets/js/bundle.5e636fcb.min.js"></script>
+  <script src="./assets/js/bundle.3e595878.min.js"></script>
 </body>
 </html>
