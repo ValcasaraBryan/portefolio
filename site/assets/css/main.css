@@ -1586,6 +1586,8 @@ button.chip {
     flex-direction: row;
     height:         100vh;
     overflow:       hidden;
+    max-width:      1700px;
+    margin:         0 auto;
   }
 
   /* ── Drawer ──────────────────────────────────────────────── */
@@ -1605,23 +1607,40 @@ button.chip {
     transition:       background-color 0.25s ease, border-color 0.25s ease;
   }
 
-  /* ── Content aside — encart publicitaire, à droite du contenu ── */
+  /* ── Content aside — colonne d'encarts publicitaires, à droite du contenu ── */
   .content-aside {
     display:     flex;
     flex-shrink: 0;
     width:       var(--content-aside-width);
-    padding:     var(--space-6) var(--space-4) var(--space-2);
+    padding:     var(--space-5) var(--space-4) var(--space-2) 0;
     position:    sticky;
     top:         0;
     height:      100vh;
-    align-items: flex-start;
-    justify-content: center;
+    overflow-y:  auto;
   }
   .content-aside:has(.content-aside__ad-slot:empty) { display: none; }
 
   .content-aside__ad-slot {
-    max-width: 100%;
-    overflow:  hidden;
+    display:        flex;
+    flex-direction: column;
+    gap:            var(--space-3);
+    width:          100%;
+  }
+
+  .content-aside__ad-card {
+    border:        1px solid var(--border);
+    background:    var(--bg-surface);
+    border-radius: var(--radius);
+    overflow:      hidden;
+    max-width:     100%;
+  }
+
+  .content-aside__ad-label {
+    font-size:      var(--fs-2xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color:          var(--text-muted);
+    padding:        var(--space-1) var(--space-2) 0;
   }
 
   /* Identity */

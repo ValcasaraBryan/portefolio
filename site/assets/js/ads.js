@@ -6,10 +6,13 @@
  * champs déjà validés côté serveur (re-validation défensive côté client) — jamais
  * d'innerHTML avec du contenu externe, jamais de HTML brut stocké en base.
  */
+const AD_MAX_VISIBLE_SLOTS = 4;
+
 const Ads = {
   _loaded: false,
 
-  /** Rempli #ad-slot-sidebar si le consentement pub est accordé. Sans effet sinon. */
+  /** Remplit #ad-slot-sidebar (jusqu'à AD_MAX_VISIBLE_SLOTS encarts empilés)
+   *  si le consentement pub est accordé. Sans effet sinon. */
   async maybeLoad() {
     if (this._loaded) return;
     if (!CookieConsent.isAllowed('ads')) return;
@@ -26,23 +29,37 @@ const Ads = {
       return;
     }
 
-    const chosen = AppUtils.pickWeightedAdSlot(slots);
-    if (!chosen) return;
+    const chosen = AppUtils.pickWeightedAdSlots(slots, AD_MAX_VISIBLE_SLOTS);
+    if (!chosen.length) return;
 
-    this._render(container, chosen);
+    container.innerHTML = ''; // sûr : aucune donnée externe n'est injectée ici, uniquement des nœuds DOM ci-dessous
+    for (const slot of chosen) {
+      const card = document.createElement('div');
+      card.className = 'content-aside__ad-card';
+
+      const label = document.createElement('p');
+      label.className = 'content-aside__ad-label';
+      label.textContent = 'Sponsorisé';
+      card.appendChild(label);
+
+      const body = document.createElement('div');
+      if (slot.width)  body.style.width  = `${slot.width}px`;
+      if (slot.height) body.style.height = `${slot.height}px`;
+      card.appendChild(body);
+
+      const rendered = this._render(body, slot);
+      if (rendered) container.appendChild(card);
+    }
     this._loaded = true;
   },
 
+  /** @returns {boolean} true si un encart a effectivement été inséré dans `container`. */
   _render(container, slot) {
-    container.innerHTML = ''; // sûr : aucune donnée externe n'est injectée ici, uniquement des nœuds DOM ci-dessous
-    if (slot.width)  container.style.width  = `${slot.width}px`;
-    if (slot.height) container.style.height = `${slot.height}px`;
-
     switch (slot.provider) {
       case 'revive_iframe': return this._renderReviveIframe(container, slot);
       case 'revive_js':     return this._renderReviveJs(container, slot);
       case 'adsense':       return this._renderAdsense(container, slot);
-      default: return;
+      default: return false;
     }
   },
 
@@ -66,7 +83,7 @@ const Ads = {
 
   _renderReviveIframe(container, slot) {
     const origin = this._validReviveOrigin(slot);
-    if (!origin) return;
+    if (!origin) return false;
 
     const iframe = document.createElement('iframe');
     iframe.src = `${origin}/www/delivery/afr.php?zoneid=${encodeURIComponent(slot.revive_zone_id)}&cb=${Date.now()}`;
@@ -79,12 +96,13 @@ const Ads = {
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
     iframe.style.border = '0';
     container.appendChild(iframe);
+    return true;
   },
 
   _renderReviveJs(container, slot) {
     const origin = this._validReviveOrigin(slot);
-    if (!origin) return;
-    if (!this._isValidReviveAsyncId(slot.revive_async_id)) return;
+    if (!origin) return false;
+    if (!this._isValidReviveAsyncId(slot.revive_async_id)) return false;
 
     const ins = document.createElement('ins');
     ins.className = 'revive-zone';
@@ -96,12 +114,13 @@ const Ads = {
     script.async = true;
     script.src = `${origin}/www/delivery/asyncjs.php`;
     container.appendChild(script);
+    return true;
   },
 
   _renderAdsense(container, slot) {
     const client = String(slot.adsense_client_id ?? '');
     const adSlot = String(slot.adsense_slot_id ?? '');
-    if (!this._isValidAdsenseClientId(client) || !this._isValidAdsenseSlotId(adSlot)) return;
+    if (!this._isValidAdsenseClientId(client) || !this._isValidAdsenseSlotId(adSlot)) return false;
 
     if (!document.querySelector('script[data-adsbygoogle-loader]')) {
       const loader = document.createElement('script');
@@ -120,5 +139,6 @@ const Ads = {
     container.appendChild(ins);
 
     (window.adsbygoogle = window.adsbygoogle || []).push({});
+    return true;
   },
 };

@@ -106,41 +106,63 @@
     const t0 = performance.now();
 
     /* ══════════════════════════════════════════════════════════
-       GROUPE 1 — pickWeightedAdSlot()
+       GROUPE 1 — pickWeightedAdSlots()
     ══════════════════════════════════════════════════════════ */
-    group('1 · AppUtils.pickWeightedAdSlot()');
+    group('1 · AppUtils.pickWeightedAdSlots()');
 
-    test('tableau vide → null', () => {
-      expect(AppUtils.pickWeightedAdSlot([])).toBeNull();
+    test('tableau vide → []', () => {
+      expect(AppUtils.pickWeightedAdSlots([], 4).length).toBe(0);
     });
 
-    test('valeur non-tableau (null) → null', () => {
-      expect(AppUtils.pickWeightedAdSlot(null)).toBeNull();
+    test('valeur non-tableau (null) → []', () => {
+      expect(AppUtils.pickWeightedAdSlots(null, 4).length).toBe(0);
     });
 
-    test('un seul slot → toujours retourné', () => {
+    test('count = 0 → []', () => {
+      expect(AppUtils.pickWeightedAdSlots([{ id: 1 }], 0).length).toBe(0);
+    });
+
+    test('un seul slot, count=4 → tableau à un élément', () => {
       const slot = { id: 1, weight: 3 };
-      expect(AppUtils.pickWeightedAdSlot([slot])).toBe(slot);
+      const picked = AppUtils.pickWeightedAdSlots([slot], 4);
+      expect(picked.length).toBe(1);
+      expect(picked[0]).toBe(slot);
+    });
+
+    test('moins de slots que count → tous les slots retournés (rempli au maximum)', () => {
+      const slots = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const picked = AppUtils.pickWeightedAdSlots(slots, 10);
+      expect(picked.length).toBe(3);
+    });
+
+    test('plus de slots que count → exactement count retournés, sans doublon', () => {
+      const slots = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
+      const picked = AppUtils.pickWeightedAdSlots(slots, 2);
+      expect(picked.length).toBe(2);
+      const ids = picked.map(s => s.id);
+      if (new Set(ids).size !== 2) throw new Error(`doublon détecté : ${ids.join(',')}`);
     });
 
     test('slot sans weight → traité comme weight=1 (ne lève pas d\'erreur)', () => {
       const slot = { id: 1 };
-      expect(AppUtils.pickWeightedAdSlot([slot])).toBe(slot);
+      expect(AppUtils.pickWeightedAdSlots([slot], 1)[0]).toBe(slot);
     });
 
-    test('tirage → retourne toujours un élément du tableau fourni', () => {
+    test('tirage → ne retourne que des éléments du tableau fourni', () => {
       const slots = [{ id: 1, weight: 1 }, { id: 2, weight: 5 }, { id: 3, weight: 2 }];
       for (let i = 0; i < 200; i++) {
-        const picked = AppUtils.pickWeightedAdSlot(slots);
-        if (!slots.includes(picked)) throw new Error(`résultat hors tableau : ${JSON.stringify(picked)}`);
+        const picked = AppUtils.pickWeightedAdSlots(slots, 2);
+        for (const p of picked) {
+          if (!slots.includes(p)) throw new Error(`résultat hors tableau : ${JSON.stringify(p)}`);
+        }
       }
     });
 
-    test('distribution pondérée respectée sur un grand échantillon', () => {
+    test('distribution pondérée respectée sur un grand échantillon (count=1)', () => {
       const slots = [{ id: 'a', weight: 1 }, { id: 'b', weight: 9 }];
       const counts = { a: 0, b: 0 };
       const N = 5000;
-      for (let i = 0; i < N; i++) counts[AppUtils.pickWeightedAdSlot(slots).id]++;
+      for (let i = 0; i < N; i++) counts[AppUtils.pickWeightedAdSlots(slots, 1)[0].id]++;
       const ratioB = counts.b / N;
       // Attendu ~90% pour b (weight 9 vs 1) — tolérance large pour éviter la flakiness
       if (ratioB < 0.8 || ratioB > 0.98) {
@@ -151,8 +173,8 @@
     test('poids négatif ou nul → traité comme minimum 1 (pas de division par zéro)', () => {
       const slots = [{ id: 1, weight: -5 }, { id: 2, weight: 0 }];
       for (let i = 0; i < 50; i++) {
-        const picked = AppUtils.pickWeightedAdSlot(slots);
-        if (![1, 2].includes(picked.id)) throw new Error('résultat inattendu');
+        const picked = AppUtils.pickWeightedAdSlots(slots, 1);
+        if (![1, 2].includes(picked[0].id)) throw new Error('résultat inattendu');
       }
     });
 

@@ -171,19 +171,30 @@ const AppUtils = {
   /* ── Publicité ───────────────────────────────────────────── */
 
   /**
-   * Tirage pondéré d'un slot pub parmi les slots actifs d'un emplacement.
+   * Tirage pondéré, sans remise, d'au plus `count` slots parmi les slots actifs
+   * d'un emplacement — remplit la colonne d'encarts ; si plus de slots actifs
+   * que de places disponibles, ceux affichés tournent d'un chargement à l'autre
+   * (probabilité proportionnelle à `weight`).
    * @param {Array<{weight?: number}>} slots
-   * @returns {Object|null}
+   * @param {number} count
+   * @returns {Array}
    */
-  pickWeightedAdSlot(slots) {
-    if (!Array.isArray(slots) || slots.length === 0) return null;
-    const total = slots.reduce((sum, s) => sum + Math.max(1, s.weight || 1), 0);
-    let r = Math.random() * total;
-    for (const s of slots) {
-      r -= Math.max(1, s.weight || 1);
-      if (r <= 0) return s;
+  pickWeightedAdSlots(slots, count) {
+    if (!Array.isArray(slots) || slots.length === 0 || count <= 0) return [];
+    const pool   = [...slots];
+    const picked = [];
+    while (pool.length && picked.length < count) {
+      const total = pool.reduce((sum, s) => sum + Math.max(1, s.weight || 1), 0);
+      let r = Math.random() * total;
+      let idx = pool.length - 1;
+      for (let i = 0; i < pool.length; i++) {
+        r -= Math.max(1, pool[i].weight || 1);
+        if (r <= 0) { idx = i; break; }
+      }
+      picked.push(pool[idx]);
+      pool.splice(idx, 1);
     }
-    return slots[slots.length - 1];
+    return picked;
   },
 
   /* ── Skeleton ────────────────────────────────────────────── */

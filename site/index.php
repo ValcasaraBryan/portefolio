@@ -281,6 +281,6 @@ $site_name_e = $esc($site_name);
   </div>
 
   <script async defer type="module" src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js"></script>
-  <script src="./assets/js/bundle.3e595878.min.js"></script>
+  <script src="./assets/js/bundle.a10ca33c.min.js"></script>
 </body>
 </html>
