@@ -6,6 +6,8 @@
 #   - site/assets/js/app.js
 #   - site/assets/js/app-utils.js
 #   - site/assets/js/i18n.js
+#   - site/assets/js/cookie-consent.js
+#   - site/assets/js/ads.js
 #   - site/assets/css/main.css
 #
 # Usage :
@@ -43,7 +45,7 @@ done
 
 JS_DIR="site/assets/js"
 CSS_DIR="site/assets/css"
-HTML="site/index.html"
+HTML="site/index.php"
 TMP_CONCAT="$JS_DIR/_concat.tmp.js"
 TMP_MIN="$JS_DIR/_min.tmp.js"
 
@@ -61,6 +63,8 @@ rm -f "$CSS_DIR/main.min.css"
 cat \
   "$JS_DIR/i18n.js" \
   "$JS_DIR/app-utils.js" \
+  "$JS_DIR/cookie-consent.js" \
+  "$JS_DIR/ads.js" \
   "$JS_DIR/app.js" \
   > "$TMP_CONCAT"
 

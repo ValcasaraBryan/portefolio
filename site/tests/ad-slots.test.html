@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Tests Publicités — Portfolio</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #0d0d0d;
+      color: #e2e2e2;
+      padding: 32px;
+      line-height: 1.6;
+    }
+    h1 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: .15em; color: #fff; margin-bottom: 6px; }
+    .hint { color: #555; font-size: 0.78rem; margin-bottom: 32px; }
+    .hint code { color: #888; }
+
+    .summary {
+      display: flex; gap: 20px; align-items: center;
+      padding: 12px 18px; border: 1px solid #2a2a2a;
+      border-radius: 4px; margin-bottom: 32px; font-size: 0.85rem;
+    }
+    .summary__pass  { color: #4ade80; font-weight: 700; }
+    .summary__fail  { color: #f87171; font-weight: 700; }
+    .summary__total { color: #888; }
+    .summary__time  { color: #444; margin-left: auto; font-size: 0.75rem; }
+    .summary--all-pass { border-color: #14532d; background: #052e16; }
+    .summary--has-fail { border-color: #7f1d1d; background: #2d0e0e; }
+
+    .group { margin-bottom: 26px; }
+    .group__title {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: .2em;
+      color: #444; border-bottom: 1px solid #1c1c1c;
+      padding-bottom: 5px; margin-bottom: 8px;
+    }
+
+    .test { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; font-size: 0.81rem; }
+    .test__icon  { flex-shrink: 0; width: 14px; }
+    .test--pass .test__label { color: #c8c8c8; }
+    .test--fail .test__label { color: #fca5a5; }
+    .test__detail { color: #f87171; font-size: 0.73rem; }
+  </style>
+</head>
+<body>
+
+  <h1>Tests unitaires · Publicités (ad_slots)</h1>
+  <p class="hint">Ouvrir directement dans le navigateur — aucun appel réseau requis. <code>pickWeightedAdSlot</code>, validation des slots, consentement RGPD.</p>
+
+  <div class="summary" id="summary"></div>
+  <div id="groups"></div>
+
+  <!-- Zone DOM isolée pour tester CookieConsent.init() -->
+  <div id="sandbox" style="display:none" aria-hidden="true"></div>
+
+  <!-- Modules à tester -->
+  <script src="../assets/js/app-utils.js"></script>
+  <script src="../assets/js/cookie-consent.js"></script>
+  <script src="../assets/js/ads.js"></script>
+
+  <script>
+  (() => {
+    /* ══════════════════════════════════════════════════════════
+       Mini test runner (identique à i18n.test.html)
+    ══════════════════════════════════════════════════════════ */
+    const _groups  = [];
+    const _results = [];
+    let   _current = null;
+
+    function group(name) {
+      _current = { name, tests: [] };
+      _groups.push(_current);
+    }
+
+    function _record(label, pass, detail = '') {
+      _current.tests.push({ label, pass, detail });
+      _results.push(pass);
+    }
+
+    function test(label, fn) {
+      try   { fn(); _record(label, true); }
+      catch (e) { _record(label, false, e.message); }
+    }
+
+    function expect(received) {
+      return {
+        toBe(exp) {
+          if (received !== exp)
+            throw new Error(`reçu "${received}" · attendu "${exp}"`);
+        },
+        toBeNull() {
+          if (received !== null)
+            throw new Error(`reçu "${received}" · attendu null`);
+        },
+        toBeTruthy() {
+          if (!received)
+            throw new Error(`valeur falsy : "${received}"`);
+        },
+        toBeFalsy() {
+          if (received)
+            throw new Error(`valeur truthy : "${received}"`);
+        },
+      };
+    }
+
+    const t0 = performance.now();
+
+    /* ══════════════════════════════════════════════════════════
+       GROUPE 1 — pickWeightedAdSlot()
+    ══════════════════════════════════════════════════════════ */
+    group('1 · AppUtils.pickWeightedAdSlot()');
+
+    test('tableau vide → null', () => {
+      expect(AppUtils.pickWeightedAdSlot([])).toBeNull();
+    });
+
+    test('valeur non-tableau (null) → null', () => {
+      expect(AppUtils.pickWeightedAdSlot(null)).toBeNull();
+    });
+
+    test('un seul slot → toujours retourné', () => {
+      const slot = { id: 1, weight: 3 };
+      expect(AppUtils.pickWeightedAdSlot([slot])).toBe(slot);
+    });
+
+    test('slot sans weight → traité comme weight=1 (ne lève pas d\'erreur)', () => {
+      const slot = { id: 1 };
+      expect(AppUtils.pickWeightedAdSlot([slot])).toBe(slot);
+    });
+
+    test('tirage → retourne toujours un élément du tableau fourni', () => {
+      const slots = [{ id: 1, weight: 1 }, { id: 2, weight: 5 }, { id: 3, weight: 2 }];
+      for (let i = 0; i < 200; i++) {
+        const picked = AppUtils.pickWeightedAdSlot(slots);
+        if (!slots.includes(picked)) throw new Error(`résultat hors tableau : ${JSON.stringify(picked)}`);
+      }
+    });
+
+    test('distribution pondérée respectée sur un grand échantillon', () => {
+      const slots = [{ id: 'a', weight: 1 }, { id: 'b', weight: 9 }];
+      const counts = { a: 0, b: 0 };
+      const N = 5000;
+      for (let i = 0; i < N; i++) counts[AppUtils.pickWeightedAdSlot(slots).id]++;
+      const ratioB = counts.b / N;
+      // Attendu ~90% pour b (weight 9 vs 1) — tolérance large pour éviter la flakiness
+      if (ratioB < 0.8 || ratioB > 0.98) {
+        throw new Error(`ratio b = ${ratioB.toFixed(3)} (attendu ~0.9)`);
+      }
+    });
+
+    test('poids négatif ou nul → traité comme minimum 1 (pas de division par zéro)', () => {
+      const slots = [{ id: 1, weight: -5 }, { id: 2, weight: 0 }];
+      for (let i = 0; i < 50; i++) {
+        const picked = AppUtils.pickWeightedAdSlot(slots);
+        if (![1, 2].includes(picked.id)) throw new Error('résultat inattendu');
+      }
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       GROUPE 2 — Validation Ads (regex, origine Revive)
+    ══════════════════════════════════════════════════════════ */
+    group('2 · Ads — validation défensive côté client');
+
+    test('zone id Revive valide (numérique) → true', () => {
+      expect(Ads._isValidReviveZoneId('42')).toBeTruthy();
+    });
+
+    test('zone id Revive vide → false', () => {
+      expect(Ads._isValidReviveZoneId('')).toBeFalsy();
+    });
+
+    test('zone id Revive non numérique → false', () => {
+      expect(Ads._isValidReviveZoneId('abc')).toBeFalsy();
+    });
+
+    test('zone id Revive undefined → false (pas d\'exception)', () => {
+      expect(Ads._isValidReviveZoneId(undefined)).toBeFalsy();
+    });
+
+    test('client id AdSense au format ca-pub-XXXXXXXXXXXXXXXX → true', () => {
+      expect(Ads._isValidAdsenseClientId('ca-pub-1234567890123456')).toBeTruthy();
+    });
+
+    test('client id AdSense mal formé → false', () => {
+      expect(Ads._isValidAdsenseClientId('pub-1234567890123456')).toBeFalsy();
+    });
+
+    test('client id AdSense avec script injecté → false', () => {
+      expect(Ads._isValidAdsenseClientId('ca-pub-123"><script>alert(1)</script>')).toBeFalsy();
+    });
+
+    test('slot id AdSense numérique → true', () => {
+      expect(Ads._isValidAdsenseSlotId('123456')).toBeTruthy();
+    });
+
+    test('slot id AdSense trop court → false', () => {
+      expect(Ads._isValidAdsenseSlotId('12')).toBeFalsy();
+    });
+
+    test('origine Revive : URL https valide + zone valide → origine retournée', () => {
+      const origin = Ads._validReviveOrigin({ revive_server_url: 'https://diffusio.eu/ad', revive_zone_id: '7' });
+      expect(origin).toBe('https://diffusio.eu');
+    });
+
+    test('origine Revive : URL http (non https) → null', () => {
+      expect(Ads._validReviveOrigin({ revive_server_url: 'http://diffusio.eu', revive_zone_id: '7' })).toBeNull();
+    });
+
+    test('origine Revive : URL invalide → null (pas d\'exception)', () => {
+      expect(Ads._validReviveOrigin({ revive_server_url: 'not-a-url', revive_zone_id: '7' })).toBeNull();
+    });
+
+    test('origine Revive : zone id invalide → null même si URL correcte', () => {
+      expect(Ads._validReviveOrigin({ revive_server_url: 'https://diffusio.eu', revive_zone_id: 'abc' })).toBeNull();
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       GROUPE 3 — CookieConsent (stockage + gate RGPD)
+    ══════════════════════════════════════════════════════════ */
+    group('3 · CookieConsent — consentement RGPD');
+
+    test('aucun choix stocké → getStatus() === null', () => {
+      localStorage.removeItem('cookie_consent');
+      expect(CookieConsent.getStatus()).toBeNull();
+    });
+
+    test('aucun choix stocké → isAllowed("ads") === false (fail-closed)', () => {
+      localStorage.removeItem('cookie_consent');
+      expect(CookieConsent.isAllowed('ads')).toBeFalsy();
+    });
+
+    test('"Tout accepter" équivalent → isAllowed("ads") === true', () => {
+      CookieConsent._save({ ads: true });
+      expect(CookieConsent.isAllowed('ads')).toBeTruthy();
+    });
+
+    test('"Nécessaire uniquement" équivalent → isAllowed("ads") === false', () => {
+      CookieConsent._save({ ads: false });
+      expect(CookieConsent.isAllowed('ads')).toBeFalsy();
+    });
+
+    test('valeur JSON corrompue en localStorage → getStatus() === null (pas d\'exception)', () => {
+      localStorage.setItem('cookie_consent', '{not-json');
+      expect(CookieConsent.getStatus()).toBeNull();
+      localStorage.removeItem('cookie_consent');
+    });
+
+    test('init() : aucun choix stocké → la bannière devient visible', () => {
+      localStorage.removeItem('cookie_consent');
+      const sandbox = document.getElementById('sandbox');
+      sandbox.innerHTML = '<div id="cookie-consent" hidden></div>';
+      CookieConsent.init();
+      expect(document.getElementById('cookie-consent').hidden).toBeFalsy();
+      sandbox.innerHTML = '';
+    });
+
+    test('init() : choix déjà stocké → la bannière reste cachée', () => {
+      CookieConsent._save({ ads: false });
+      const sandbox = document.getElementById('sandbox');
+      sandbox.innerHTML = '<div id="cookie-consent" hidden></div>';
+      CookieConsent.init();
+      expect(document.getElementById('cookie-consent').hidden).toBeTruthy();
+      sandbox.innerHTML = '';
+      localStorage.removeItem('cookie_consent');
+    });
+
+    test('clic "Tout accepter" → consentement ads=true + callback déclenché', () => {
+      localStorage.removeItem('cookie_consent');
+      const sandbox = document.getElementById('sandbox');
+      sandbox.innerHTML = '<div id="cookie-consent" hidden><button id="cookie-consent-accept-all"></button></div>';
+      let called = false;
+      CookieConsent.init(() => { called = true; });
+      document.getElementById('cookie-consent-accept-all').click();
+      expect(CookieConsent.isAllowed('ads')).toBeTruthy();
+      expect(called).toBeTruthy();
+      sandbox.innerHTML = '';
+      localStorage.removeItem('cookie_consent');
+    });
+
+    /* ══════════════════════════════════════════════════════════
+       Rendu final
+    ══════════════════════════════════════════════════════════ */
+    const elapsed = Math.round(performance.now() - t0);
+    const total   = _results.length;
+    const passed  = _results.filter(Boolean).length;
+    const failed  = total - passed;
+
+    document.getElementById('summary').className =
+      'summary ' + (failed === 0 ? 'summary--all-pass' : 'summary--has-fail');
+    document.getElementById('summary').innerHTML = `
+      <span class="summary__total">Total : <strong>${total}</strong></span>
+      <span class="summary__pass">✅ ${passed} passés</span>
+      ${failed ? `<span class="summary__fail">❌ ${failed} échoués</span>` : ''}
+      <span class="summary__time">${elapsed} ms</span>
+    `;
+
+    const groupsEl = document.getElementById('groups');
+    for (const g of _groups) {
+      const gFail = g.tests.filter(t => !t.pass).length;
+      const div   = document.createElement('div');
+      div.className = 'group';
+      div.innerHTML = `
+        <div class="group__title">
+          ${gFail === 0 ? '✅' : '❌'} ${g.name}
+          &nbsp;·&nbsp; ${g.tests.filter(t => t.pass).length}/${g.tests.length}
+        </div>
+        ${g.tests.map(t => `
+          <div class="test ${t.pass ? 'test--pass' : 'test--fail'}">
+            <span class="test__icon">${t.pass ? '✓' : '✗'}</span>
+            <span class="test__label">${t.label}</span>
+            ${t.detail ? `<span class="test__detail">→ ${t.detail}</span>` : ''}
+          </div>
+        `).join('')}
+      `;
+      groupsEl.appendChild(div);
+    }
+
+    document.title = `${failed === 0 ? '✅' : '❌'} Tests Publicités (${passed}/${total})`;
+  })();
+  </script>
+</body>
+</html>

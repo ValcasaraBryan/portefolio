@@ -168,6 +168,24 @@ const AppUtils = {
     return { valid: errors.length === 0, errors };
   },
 
+  /* ── Publicité ───────────────────────────────────────────── */
+
+  /**
+   * Tirage pondéré d'un slot pub parmi les slots actifs d'un emplacement.
+   * @param {Array<{weight?: number}>} slots
+   * @returns {Object|null}
+   */
+  pickWeightedAdSlot(slots) {
+    if (!Array.isArray(slots) || slots.length === 0) return null;
+    const total = slots.reduce((sum, s) => sum + Math.max(1, s.weight || 1), 0);
+    let r = Math.random() * total;
+    for (const s of slots) {
+      r -= Math.max(1, s.weight || 1);
+      if (r <= 0) return s;
+    }
+    return slots[slots.length - 1];
+  },
+
   /* ── Skeleton ────────────────────────────────────────────── */
 
   /**

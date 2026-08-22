@@ -157,6 +157,31 @@
           { key: 'icon_dark', type: 'image_upload', uploadType: 'link', label: 'Icône thème sombre' },
         ],
       },
+      { id: 'ad_slots', label: 'Publicités', endpoint: 'ad_slots.php',
+        bilingual: false,
+        columns: ['label', 'placement', 'provider', 'is_active', 'weight'],
+        fields: [
+          { key: 'label' },
+          { key: 'placement', type: 'select', options: [
+              { value: 'sidebar', label: 'Sidebar' },
+            ] },
+          { key: 'provider', type: 'select', options: [
+              { value: 'revive_iframe', label: 'Revive — iframe' },
+              { value: 'revive_js',     label: 'Revive — async JS' },
+              { value: 'adsense',       label: 'Google AdSense' },
+            ] },
+          { key: 'is_active', type: 'boolean', label: 'Actif' },
+          { key: 'weight' },
+          { key: 'width' },
+          { key: 'height' },
+          { key: '_sep_revive',  type: 'separator', label: 'Revive Adserver' },
+          { key: 'revive_server_url', label: 'URL serveur Revive' },
+          { key: 'revive_zone_id',    label: 'Zone ID' },
+          { key: '_sep_adsense', type: 'separator', label: 'Google AdSense' },
+          { key: 'adsense_client_id', label: 'Client ID (ca-pub-…)' },
+          { key: 'adsense_slot_id',   label: 'Slot ID' },
+        ],
+      },
     ];
 
     /* ── SKILLS PICKER ─────────────────────────────────────── */
@@ -352,6 +377,32 @@
       /* Sélecteur de type bilingue */
       if (fieldDef.type === 'type_selector') {
         return React.createElement(TypeSelector, { key, form, setForm });
+      }
+
+      /* Sélecteur générique à choix fixes (fieldDef.options: [{value, label}]) */
+      if (fieldDef.type === 'select') {
+        return React.createElement(TextField, {
+          key, select: true, label, size: 'small',
+          value: form[key] ?? '',
+          onChange: e => setForm(prev => ({ ...prev, [key]: e.target.value })),
+          fullWidth: true,
+        },
+          ...(fieldDef.options ?? []).map(o =>
+            React.createElement(MenuItem, { key: o.value, value: o.value }, o.label)
+          )
+        );
+      }
+
+      /* Interrupteur booléen */
+      if (fieldDef.type === 'boolean') {
+        return React.createElement(FormControlLabel, {
+          key,
+          control: React.createElement(Switch, {
+            checked: !!form[key],
+            onChange: e => setForm(prev => ({ ...prev, [key]: e.target.checked })),
+          }),
+          label,
+        });
       }
 
       /* Séparateur de section FR / EN */

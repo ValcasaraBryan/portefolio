@@ -165,5 +165,17 @@
             "login_back": "Retour admin panel",
             "access_denied": "Accès refusé : rôle superadmin requis"
         }
+    },
+    "consent": {
+        "text": "Ce site utilise des cookies publicitaires pour afficher des bannières partenaires. Vous pouvez accepter, refuser ou personnaliser votre choix à tout moment.",
+        "accept_all": "Tout accepter",
+        "necessary_only": "Nécessaire uniquement",
+        "customize": "Personnaliser",
+        "customize_title": "Préférences de cookies",
+        "category_necessary_label": "Nécessaire",
+        "category_necessary_desc": "Indispensable au fonctionnement du site (session, préférences de langue/thème). Toujours actif.",
+        "category_ads_label": "Publicité",
+        "category_ads_desc": "Permet l'affichage de bannières publicitaires tierces (Revive Adserver, Google AdSense).",
+        "save_preferences": "Enregistrer mes choix"
     }
 }

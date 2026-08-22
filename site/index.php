@@ -189,6 +189,9 @@ $site_name_e = $esc($site_name);
       <!-- 6. Divider -->
       <div class="drawer__divider"></div>
 
+      <!-- 6b. Encart publicitaire (rempli par ads.js, uniquement si consentement accepté) -->
+      <div class="drawer__ad-slot" id="ad-slot-sidebar"></div>
+
       <!-- 7. Footer: copyright + social links -->
       <div class="drawer__footer">
         <span class="drawer__copy">© 2026</span>
@@ -241,7 +244,41 @@ $site_name_e = $esc($site_name);
 
   </div>
 
+  <!-- Bannière de consentement cookies (RGPD) — site-wide, non bloquante -->
+  <div class="cookie-consent" id="cookie-consent" hidden>
+    <p class="cookie-consent__text" data-i18n="consent.text"></p>
+    <div class="cookie-consent__actions">
+      <button type="button" class="btn btn--sm" id="cookie-consent-customize" data-i18n="consent.customize"></button>
+      <button type="button" class="btn btn--sm" id="cookie-consent-necessary" data-i18n="consent.necessary_only"></button>
+      <button type="button" class="btn btn--sm btn--primary" id="cookie-consent-accept-all" data-i18n="consent.accept_all"></button>
+    </div>
+  </div>
+
+  <!-- Panneau de personnalisation du consentement -->
+  <div class="modal-overlay hidden" id="cookie-consent-modal">
+    <div class="modal cookie-consent-modal">
+      <h3 data-i18n="consent.customize_title"></h3>
+      <div class="cookie-consent-modal__category">
+        <div class="cookie-consent-modal__category-info">
+          <strong data-i18n="consent.category_necessary_label"></strong>
+          <p data-i18n="consent.category_necessary_desc"></p>
+        </div>
+        <input type="checkbox" checked disabled aria-disabled="true">
+      </div>
+      <div class="cookie-consent-modal__category">
+        <div class="cookie-consent-modal__category-info">
+          <strong data-i18n="consent.category_ads_label"></strong>
+          <p data-i18n="consent.category_ads_desc"></p>
+        </div>
+        <input type="checkbox" id="cookie-consent-toggle-ads">
+      </div>
+      <div class="cookie-consent-modal__actions">
+        <button type="button" class="btn btn--primary" id="cookie-consent-save" data-i18n="consent.save_preferences"></button>
+      </div>
+    </div>
+  </div>
+
   <script async defer type="module" src="https://cdn.jsdelivr.net/gh/altcha-org/altcha/dist/altcha.min.js"></script>
-  <script src="./assets/js/bundle.94d032d5.min.js"></script>
+  <script src="./assets/js/bundle.5e636fcb.min.js"></script>
 </body>
 </html>

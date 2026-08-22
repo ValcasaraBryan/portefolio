@@ -1532,10 +1532,48 @@ button.chip {
 .about__skills          { margin-bottom: var(--space-3); }
 .about__certifications  { margin-bottom: var(--space-2); }
 
+/* ── COOKIE CONSENT (RGPD) — site-wide ───────────────────────── */
+.cookie-consent {
+  position:        fixed;
+  left:            0;
+  right:           0;
+  bottom:          var(--bottom-bar-h);
+  z-index:         150;
+  display:         flex;
+  flex-direction:  column;
+  gap:             var(--space-2);
+  align-items:     center;
+  justify-content: space-between;
+  padding:         var(--space-2) var(--space-3);
+  background:      var(--bg-surface);
+  border-top:      1px solid var(--border);
+}
+.cookie-consent[hidden] { display: none; }
+.cookie-consent__text   { font-size: var(--fs-sm); color: var(--text); text-align: center; }
+.cookie-consent__actions{ display: flex; gap: var(--space-1); flex-wrap: wrap; justify-content: center; }
+
+.cookie-consent-modal__category {
+  display:         flex;
+  align-items:     flex-start;
+  justify-content: space-between;
+  gap:             var(--space-2);
+  padding:         var(--space-2) 0;
+  border-bottom:   1px solid var(--border-dim);
+}
+.cookie-consent-modal__category:last-of-type { border-bottom: none; }
+.cookie-consent-modal__category-info strong { display: block; font-size: var(--fs-sm); color: var(--text); }
+.cookie-consent-modal__category-info p      { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; }
+.cookie-consent-modal__actions { display: flex; justify-content: flex-end; margin-top: var(--space-2); }
+
 /* ════════════════════════════════════════════════════════════
    DESKTOP  ≥ 768px
    ════════════════════════════════════════════════════════════ */
 @media (min-width: 768px) {
+
+  .cookie-consent {
+    bottom:          0;
+    flex-direction:  row;
+  }
 
   .profile-header { display: none; }
   .bottom-tab-bar { display: none; }
@@ -1681,6 +1719,15 @@ button.chip {
     flex-shrink: 0;
     opacity:     0.35;
   }
+
+  /* Encart publicitaire — vide tant qu'aucun slot n'est rendu (pas de bloc fantôme) */
+  .drawer__ad-slot {
+    align-self:  center;
+    max-width:   100%;
+    overflow:    hidden;
+    flex-shrink: 0;
+  }
+  .drawer__ad-slot:empty { display: none; }
 
   /* Footer */
   .drawer__footer {

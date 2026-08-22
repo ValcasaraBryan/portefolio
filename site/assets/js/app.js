@@ -1362,6 +1362,10 @@ async function init() {
   }
 
   updateCvLink(lang);
+
+  /* ⑥ Consentement cookies + chargement des encarts pub (RGPD : jamais avant accord) */
+  CookieConsent.init(() => Ads.maybeLoad());
+  if (CookieConsent.isAllowed('ads')) Ads.maybeLoad();
 }
 
 document.addEventListener('DOMContentLoaded', init);

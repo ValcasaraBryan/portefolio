@@ -165,5 +165,17 @@
             "login_back": "Back to admin panel",
             "access_denied": "Access denied: superadmin role required"
         }
+    },
+    "consent": {
+        "text": "This site uses advertising cookies to display partner banners. You can accept, refuse, or customize your choice at any time.",
+        "accept_all": "Accept all",
+        "necessary_only": "Necessary only",
+        "customize": "Customize",
+        "customize_title": "Cookie preferences",
+        "category_necessary_label": "Necessary",
+        "category_necessary_desc": "Required for the site to work (session, language/theme preferences). Always active.",
+        "category_ads_label": "Advertising",
+        "category_ads_desc": "Enables third-party advertising banners (Revive Adserver, Google AdSense).",
+        "save_preferences": "Save my preferences"
     }
 }
