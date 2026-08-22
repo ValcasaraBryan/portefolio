@@ -1,0 +1,35 @@
+name: Déploiement preprod
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_build:
+        description: "Sauter le rebuild JS/CSS (déploiement rapide)"
+        type: boolean
+        default: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, portfolio-preprod]
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restaurer les secrets (.env)
+        run: cp /home/portfolio-runner/persistent/preprod.env .env
+
+      - name: Restaurer les fichiers uploadés (persistants entre les déploiements)
+        run: rsync -a /home/portfolio-runner/persistent/uploads/ site/uploads/
+
+      - name: Déploiement
+        run: |
+          if [[ "${{ inputs.skip_build }}" == "true" ]]; then
+            bash deploy-preprod.sh --skip-build
+          else
+            bash deploy-preprod.sh
+          fi
+
+      - name: Sauvegarder les nouveaux fichiers uploadés vers le stockage persistant
+        if: always()
+        run: rsync -a site/uploads/ /home/portfolio-runner/persistent/uploads/

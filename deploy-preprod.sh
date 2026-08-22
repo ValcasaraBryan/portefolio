@@ -57,11 +57,13 @@ if mysql -h "${DB_HOST:-127.0.0.1}" -P "${DB_PORT:-3306}" \
 else
     info "Base absente — exécution de setup_preprod.sh..."
     bash "$ROOT/bdd/setup_preprod.sh"
-    info "Application du schéma + migrations..."
+    info "Application du schéma initial..."
     bash "$ROOT/bdd/apply.sh"
-    bash "$ROOT/bdd/migrate.sh"
     ok "Base initialisée"
 fi
+
+info "Migrations en attente..."
+bash "$ROOT/bdd/migrate.sh"
 
 # =============================================================================
 # 3. Configs Apache — liens symboliques

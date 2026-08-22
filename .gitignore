@@ -29,6 +29,9 @@ Thumbs.db
 bdd/*
 !bdd/*.php
 !bdd/*.sh
+!bdd/schema.sql
+!bdd/migrations/
+bdd/dumps/
 
 
 .vscode/

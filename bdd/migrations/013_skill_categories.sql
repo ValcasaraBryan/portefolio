@@ -1,0 +1,63 @@
+-- Migration 013 : table skill_categories
+-- Catégories de skills avec description bilingue, couleur et ordre d'affichage.
+-- La colonne `key` correspond au nom anglais utilisé dans skill_translations.category (locale='en').
+
+CREATE TABLE IF NOT EXISTS `skill_categories` (
+  `id`             INT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `key`            VARCHAR(100) NOT NULL UNIQUE COMMENT 'Canonical English category name — matches skill_translations.category WHERE locale=''en''',
+  `description_fr` TEXT         NOT NULL DEFAULT '',
+  `description_en` TEXT         NOT NULL DEFAULT '',
+  `color`          VARCHAR(7)   NOT NULL DEFAULT '#888888' COMMENT 'Hex color #RRGGBB',
+  `sort_order`     INT          NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed : catégories existantes en BDD (SELECT DISTINCT category FROM skill_translations WHERE locale='en')
+INSERT INTO `skill_categories` (`key`, `description_fr`, `description_en`, `color`, `sort_order`) VALUES
+('Front-End',       'Technologies côté navigateur : HTML, CSS, JavaScript, frameworks UI.',
+                    'Browser-side technologies: HTML, CSS, JavaScript, UI frameworks.',
+                    '#7ED9B1', 1),
+('Back-End',        'Langages et frameworks côté serveur, conception d''API et logique métier.',
+                    'Server-side languages and frameworks, API design and business logic.',
+                    '#6C9BCF', 2),
+('Languages',       'Langages de programmation généralistes utilisés en développement ou scripting.',
+                    'General-purpose programming languages used in development or scripting.',
+                    '#A8D8EA', 3),
+('BDD',             'Systèmes de gestion de bases de données relationnelles et NoSQL.',
+                    'Relational and NoSQL database management systems.',
+                    '#F7A072', 4),
+('Infrastructure',  'Administration système, virtualisation, stockage et architecture réseau.',
+                    'System administration, virtualization, storage and network architecture.',
+                    '#E88C8C', 5),
+('Networking',      'Protocoles réseau, routage, commutation et administration d''équipements.',
+                    'Network protocols, routing, switching and equipment administration.',
+                    '#E8A87C', 6),
+('Cloud provider',  'Plateformes cloud publiques et services managés (AWS, Azure, GCP…).',
+                    'Public cloud platforms and managed services (AWS, Azure, GCP…).',
+                    '#B07ED9', 7),
+('DevSecOps',       'Intégration continue, déploiement, conteneurisation et pratiques DevSecOps.',
+                    'CI/CD pipelines, containerization, and DevSecOps practices.',
+                    '#9AD0B2', 8),
+('Tooling',         'Outils de développement, versionning, productivité et environnement de travail.',
+                    'Development tools, version control, productivity and work environment.',
+                    '#F5D96B', 9),
+('Cryptography',    'Algorithmes cryptographiques, PKI, chiffrement et protocoles sécurisés.',
+                    'Cryptographic algorithms, PKI, encryption and secure protocols.',
+                    '#C9A0DC', 10),
+('Cyber Strategy',  'Stratégie de cybersécurité, gestion des risques et réponse aux incidents.',
+                    'Cybersecurity strategy, risk management and incident response.',
+                    '#FF8C69', 11),
+('Governance',      'Cadres de gouvernance, conformité réglementaire et gestion des politiques SI.',
+                    'Governance frameworks, regulatory compliance and IT policy management.',
+                    '#87CEEB', 12),
+('Policy',          'Politiques de sécurité, procédures internes et documentation normative.',
+                    'Security policies, internal procedures and normative documentation.',
+                    '#DDA0DD', 13),
+('API',             'Conception, documentation et intégration d''APIs REST, GraphQL ou autres.',
+                    'Design, documentation and integration of REST, GraphQL or other APIs.',
+                    '#98FB98', 14),
+('Best practice',   'Bonnes pratiques de développement, qualité logicielle et revue de code.',
+                    'Development best practices, software quality and code review.',
+                    '#F0E68C', 15),
+('System',          'Systèmes d''exploitation, administration bas niveau et performances système.',
+                    'Operating systems, low-level administration and system performance.',
+                    '#D2B48C', 16);
