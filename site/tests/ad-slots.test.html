@@ -197,6 +197,18 @@
       expect(Ads._isValidAdsenseSlotId('12')).toBeFalsy();
     });
 
+    test('data-revive-id valide (hex 32 caractères) → true', () => {
+      expect(Ads._isValidReviveAsyncId('ec626dcd633ae4604d4ee4ee44a8edb4')).toBeTruthy();
+    });
+
+    test('data-revive-id vide → false', () => {
+      expect(Ads._isValidReviveAsyncId('')).toBeFalsy();
+    });
+
+    test('data-revive-id non hexadécimal → false', () => {
+      expect(Ads._isValidReviveAsyncId('not-hex-value!!')).toBeFalsy();
+    });
+
     test('origine Revive : URL https valide + zone valide → origine retournée', () => {
       const origin = Ads._validReviveOrigin({ revive_server_url: 'https://diffusio.eu/ad', revive_zone_id: '7' });
       expect(origin).toBe('https://diffusio.eu');

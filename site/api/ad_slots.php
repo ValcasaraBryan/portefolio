@@ -37,7 +37,7 @@ function validate_ad_slot(array $d): array
 
     /* Les champs du provider non sélectionné sont forcés à NULL pour éviter
        une config résiduelle contradictoire si on change de provider. */
-    $reviveServerUrl = $reviveZoneId = $adsenseClientId = $adsenseSlotId = null;
+    $reviveServerUrl = $reviveZoneId = $reviveAsyncId = $adsenseClientId = $adsenseSlotId = null;
 
     if (in_array($provider, ['revive_iframe', 'revive_js'], true)) {
         $url = trim((string) ($d['revive_server_url'] ?? ''));
@@ -51,6 +51,15 @@ function validate_ad_slot(array $d): array
             return [null, 'Invalid Revive zone id'];
         }
         $reviveZoneId = $zone;
+
+        /* Requis par le tag "Asynchronous JS" de Revive (data-revive-id) — absent du tag iframe. */
+        if ($provider === 'revive_js') {
+            $asyncId = (string) ($d['revive_async_id'] ?? '');
+            if (!preg_match('/^[a-f0-9]{16,64}$/i', $asyncId)) {
+                return [null, 'Invalid Revive async id'];
+            }
+            $reviveAsyncId = $asyncId;
+        }
     }
 
     if ($provider === 'adsense') {
@@ -77,6 +86,7 @@ function validate_ad_slot(array $d): array
         ':height'            => $height,
         ':revive_server_url' => $reviveServerUrl,
         ':revive_zone_id'    => $reviveZoneId,
+        ':revive_async_id'   => $reviveAsyncId,
         ':adsense_client_id' => $adsenseClientId,
         ':adsense_slot_id'   => $adsenseSlotId,
     ], null];
@@ -93,7 +103,7 @@ switch (method()) {
             }
             $stmt = $pdo->prepare(
                 'SELECT `id`,`provider`,`width`,`height`,`weight`,
-                        `revive_server_url`,`revive_zone_id`,`adsense_client_id`,`adsense_slot_id`
+                        `revive_server_url`,`revive_zone_id`,`revive_async_id`,`adsense_client_id`,`adsense_slot_id`
                  FROM `ad_slots`
                  WHERE `placement` = :placement AND `is_active` = 1
                  ORDER BY `id` ASC'
@@ -106,7 +116,7 @@ switch (method()) {
         require_auth();
         $rows = $pdo->query(
             'SELECT `id`,`label`,`placement`,`provider`,`is_active`,`weight`,`width`,`height`,
-                    `revive_server_url`,`revive_zone_id`,`adsense_client_id`,`adsense_slot_id`
+                    `revive_server_url`,`revive_zone_id`,`revive_async_id`,`adsense_client_id`,`adsense_slot_id`
              FROM `ad_slots` ORDER BY `id` DESC'
         )->fetchAll();
         json_response($rows);
@@ -120,10 +130,10 @@ switch (method()) {
         $stmt = $pdo->prepare(
             'INSERT INTO `ad_slots`
                  (`label`,`placement`,`provider`,`is_active`,`weight`,`width`,`height`,
-                  `revive_server_url`,`revive_zone_id`,`adsense_client_id`,`adsense_slot_id`)
+                  `revive_server_url`,`revive_zone_id`,`revive_async_id`,`adsense_client_id`,`adsense_slot_id`)
              VALUES
                  (:label,:placement,:provider,:is_active,:weight,:width,:height,
-                  :revive_server_url,:revive_zone_id,:adsense_client_id,:adsense_slot_id)'
+                  :revive_server_url,:revive_zone_id,:revive_async_id,:adsense_client_id,:adsense_slot_id)'
         );
         $stmt->execute($fields);
         json_response(['success' => true, 'id' => (int) $pdo->lastInsertId()], 201);
@@ -144,7 +154,7 @@ switch (method()) {
             'UPDATE `ad_slots` SET
                  `label`=:label, `placement`=:placement, `provider`=:provider, `is_active`=:is_active,
                  `weight`=:weight, `width`=:width, `height`=:height,
-                 `revive_server_url`=:revive_server_url, `revive_zone_id`=:revive_zone_id,
+                 `revive_server_url`=:revive_server_url, `revive_zone_id`=:revive_zone_id, `revive_async_id`=:revive_async_id,
                  `adsense_client_id`=:adsense_client_id, `adsense_slot_id`=:adsense_slot_id
              WHERE `id`=:id'
         );

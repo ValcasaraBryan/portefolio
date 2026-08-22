@@ -50,6 +50,7 @@ const Ads = {
    * Duplique les contraintes déjà appliquées côté serveur (ad_slots.php) —
    * échec silencieux (pas de rendu) plutôt que de faire confiance à l'API. */
   _isValidReviveZoneId(zoneId)    { return /^\d{1,10}$/.test(String(zoneId ?? '')); },
+  _isValidReviveAsyncId(asyncId)  { return /^[a-f0-9]{16,64}$/i.test(String(asyncId ?? '')); },
   _isValidAdsenseClientId(client) { return /^ca-pub-\d{10,20}$/.test(String(client ?? '')); },
   _isValidAdsenseSlotId(slotId)   { return /^\d{6,15}$/.test(String(slotId ?? '')); },
 
@@ -83,10 +84,12 @@ const Ads = {
   _renderReviveJs(container, slot) {
     const origin = this._validReviveOrigin(slot);
     if (!origin) return;
+    if (!this._isValidReviveAsyncId(slot.revive_async_id)) return;
 
     const ins = document.createElement('ins');
     ins.className = 'revive-zone';
     ins.setAttribute('data-revive-zoneid', String(slot.revive_zone_id));
+    ins.setAttribute('data-revive-id', String(slot.revive_async_id));
     container.appendChild(ins);
 
     const script = document.createElement('script');

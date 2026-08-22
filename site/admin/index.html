@@ -175,8 +175,10 @@
           { key: 'width' },
           { key: 'height' },
           { key: '_sep_revive',  type: 'separator', label: 'Revive Adserver' },
+          { key: '_revive_paste', type: 'revive_tag_paste' },
           { key: 'revive_server_url', label: 'URL serveur Revive' },
           { key: 'revive_zone_id',    label: 'Zone ID' },
+          { key: 'revive_async_id',  label: 'data-revive-id (tag async JS uniquement)' },
           { key: '_sep_adsense', type: 'separator', label: 'Google AdSense' },
           { key: 'adsense_client_id', label: 'Client ID (ca-pub-…)' },
           { key: 'adsense_slot_id',   label: 'Slot ID' },
@@ -279,6 +281,69 @@
       );
     }
 
+    /* ── REVIVE TAG PASTE — extraction auto (jamais stocké brut) ─
+     * Parse uniquement URL/zoneid/data-revive-id/width/height via regex
+     * et remplit les champs structurés existants ; la validation serveur
+     * (ad_slots.php) s'applique ensuite normalement à l'enregistrement. */
+    function parseReviveTag(text) {
+      const hostMatch   = text.match(/(?:https?:)?\/\/([^\/'"]+)\/www\/delivery\//);
+      const zoneMatch   = text.match(/data-revive-zoneid=["'](\d+)["']/) || text.match(/[?&]zoneid=(\d+)/);
+      const asyncMatch  = text.match(/data-revive-id=["']([a-f0-9]+)["']/i);
+      const widthMatch  = text.match(/\bwidth=['"]?(\d+)['"]?/);
+      const heightMatch = text.match(/\bheight=['"]?(\d+)['"]?/);
+      const isAsync     = /asyncjs\.php/.test(text);
+      const isIframe    = /<iframe/i.test(text);
+
+      const result = {};
+      if (hostMatch)   result.revive_server_url = `https://${hostMatch[1]}`;
+      if (zoneMatch)   result.revive_zone_id    = zoneMatch[1];
+      if (asyncMatch)  result.revive_async_id   = asyncMatch[1];
+      if (widthMatch)  result.width  = widthMatch[1];
+      if (heightMatch) result.height = heightMatch[1];
+      if (isAsync)       result.provider = 'revive_js';
+      else if (isIframe) result.provider = 'revive_iframe';
+      return result;
+    }
+
+    function ReviveTagPaste({ setForm }) {
+      const [raw, setRaw] = useState('');
+      const [msg, setMsg] = useState(null);
+
+      const extract = () => {
+        const parsed = parseReviveTag(raw);
+        if (!parsed.revive_server_url && !parsed.revive_zone_id) {
+          setMsg({ ok: false, text: 'Aucune information reconnue dans ce texte.' });
+          return;
+        }
+        setForm(prev => ({ ...prev, ...parsed }));
+        const found = Object.keys(parsed).filter(k => k !== 'provider');
+        setMsg({ ok: true, text: `Champs remplis : ${found.join(', ')}${parsed.provider ? ' · provider détecté' : ''}` });
+      };
+
+      return React.createElement(Box, {
+        sx: { display: 'flex', flexDirection: 'column', gap: 1, p: 1.5, border: '1px dashed #444', borderRadius: 1 },
+      },
+        React.createElement(Typography, { variant: 'caption', sx: { color: 'text.secondary' } },
+          'Coller ici le tag fourni par Revive Adserver (iframe ou async JS) — les champs ci-dessous seront remplis automatiquement.'
+        ),
+        React.createElement(TextField, {
+          multiline: true, rows: 4, size: 'small',
+          placeholder: '<!-- Revive Adserver ... -->',
+          value: raw,
+          onChange: e => setRaw(e.target.value),
+        }),
+        React.createElement(Box, { sx: { display: 'flex', alignItems: 'center', gap: 1.5 } },
+          React.createElement(Button, {
+            variant: 'outlined', size: 'small', onClick: extract, disabled: !raw.trim(),
+          }, 'Extraire'),
+          msg && React.createElement(Typography, {
+            variant: 'caption',
+            sx: { color: msg.ok ? '#7ED9B1' : 'error.main' },
+          }, msg.text)
+        )
+      );
+    }
+
     /* ── IMAGE PICKER FIELD ──────────────────────────────── */
     function ImagePickerField({ value, onChange, uploadType, label }) {
       const [uploading, setUploading] = useState(false);
@@ -377,6 +442,11 @@
       /* Sélecteur de type bilingue */
       if (fieldDef.type === 'type_selector') {
         return React.createElement(TypeSelector, { key, form, setForm });
+      }
+
+      /* Coller un tag Revive Adserver → extraction auto vers les champs structurés */
+      if (fieldDef.type === 'revive_tag_paste') {
+        return React.createElement(ReviveTagPaste, { key, setForm });
       }
 
       /* Sélecteur générique à choix fixes (fieldDef.options: [{value, label}]) */
